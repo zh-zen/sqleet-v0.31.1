@@ -32,7 +32,7 @@ Run any .bat file by double-clicking it, or from a terminal:
 The scripts will prompt for:
 
   - input file path or folder path
-  - output file path when using single-file mode
+  - optional output file path when using single-file mode
   - password
 
 Naming rules
@@ -40,17 +40,20 @@ Naming rules
 
 Single-file mode:
 
-  - you choose the output file path yourself
+  - you can choose the output file path yourself
+  - if left blank, encryption uses encrypted\ and decryption uses decrypted\
+  - the default output file name stays the same as the source file name
 
 Folder mode:
 
-  - encryption output: originalname_enc.db
-  - decryption output: originalname_dec.db
+  - encryption output folder: encrypted\
+  - decryption output folder: decrypted\
+  - output file name stays the same as the source file name
 
 Examples:
 
-  data.db      -> data_enc.db
-  data_enc.db  -> data_dec.db
+  data.db       -> encrypted\data.db
+  data.db       -> decrypted\data.db
 
 Notes
 -----
@@ -59,3 +62,4 @@ Notes
   - source files are not modified
   - folder mode does not require a specific source file name pattern
   - folder mode skips a source file when its corresponding target file already exists
+  - folder mode only processes .db files directly inside the selected folder

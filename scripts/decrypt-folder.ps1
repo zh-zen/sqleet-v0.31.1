@@ -35,6 +35,11 @@ if (-not (Test-Path -LiteralPath $FolderPath -PathType Container)) {
     exit 1
 }
 
+$outputFolder = Join-Path $FolderPath "decrypted"
+if (-not (Test-Path -LiteralPath $outputFolder)) {
+    New-Item -ItemType Directory -Path $outputFolder | Out-Null
+}
+
 $dbFiles = Get-ChildItem -LiteralPath $FolderPath -File -Filter "*.db" |
     Sort-Object Name
 
@@ -46,7 +51,7 @@ if ($dbFiles.Count -eq 0) {
 $processed = 0
 $skipped = 0
 foreach ($dbFile in $dbFiles) {
-    $targetPath = Join-Path $dbFile.DirectoryName ($dbFile.BaseName + "_dec" + $dbFile.Extension)
+    $targetPath = Join-Path $outputFolder $dbFile.Name
     if (Test-Path -LiteralPath $targetPath) {
         Write-Host ""
         Write-Host ("[INFO] Skipping {0} because {1} already exists." -f $dbFile.Name, [System.IO.Path]::GetFileName($targetPath))

@@ -19,7 +19,7 @@ if ([string]::IsNullOrWhiteSpace($SourceDb)) {
     $SourceDb = Read-Host "Encrypted database path"
 }
 if ([string]::IsNullOrWhiteSpace($TargetDb)) {
-    $TargetDb = Read-Host "Decrypted output path"
+    $TargetDb = Read-Host "Decrypted output path (leave blank to use .\\decrypted\\<same file name>)"
 }
 if ([string]::IsNullOrWhiteSpace($Password)) {
     $Password = Read-Host "Password"
@@ -27,10 +27,6 @@ if ([string]::IsNullOrWhiteSpace($Password)) {
 
 if ([string]::IsNullOrWhiteSpace($SourceDb)) {
     Write-Host "[ERROR] Encrypted database path is required."
-    exit 1
-}
-if ([string]::IsNullOrWhiteSpace($TargetDb)) {
-    Write-Host "[ERROR] Decrypted output path is required."
     exit 1
 }
 if ([string]::IsNullOrWhiteSpace($Password)) {
@@ -43,11 +39,24 @@ if (-not (Test-Path -LiteralPath $SourceDb)) {
     exit 1
 }
 
+$sourceItem = Get-Item -LiteralPath $SourceDb
+if ([string]::IsNullOrWhiteSpace($TargetDb)) {
+    $defaultFolder = Join-Path $sourceItem.DirectoryName "decrypted"
+    if (-not (Test-Path -LiteralPath $defaultFolder)) {
+        New-Item -ItemType Directory -Path $defaultFolder | Out-Null
+    }
+    $TargetDb = Join-Path $defaultFolder $sourceItem.Name
+}
+
 $sourceFull = [System.IO.Path]::GetFullPath($SourceDb)
 $targetFull = [System.IO.Path]::GetFullPath($TargetDb)
 if ($sourceFull -ieq $targetFull) {
     Write-Host "[ERROR] Source and target paths must be different."
     exit 1
+}
+
+if (-not (Test-Path -LiteralPath (Split-Path -Parent $targetFull))) {
+    New-Item -ItemType Directory -Path (Split-Path -Parent $targetFull) | Out-Null
 }
 
 Copy-Item -LiteralPath $SourceDb -Destination $TargetDb -Force
