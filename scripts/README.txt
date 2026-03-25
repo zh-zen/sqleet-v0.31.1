@@ -63,3 +63,34 @@ Notes
   - folder mode does not require a specific source file name pattern
   - folder mode skips a source file when its corresponding target file already exists
   - folder mode only processes .db files directly inside the selected folder
+
+PowerShell permanent aliases
+----------------------------
+
+To make folder encryption and decryption easier to run, you can add permanent
+PowerShell aliases. These aliases will be available in all future PowerShell
+sessions after you save them in your PowerShell profile.
+
+Create the profile first if it does not already exist:
+
+```powershell
+# Create the profile file if it does not exist
+if (-not (Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force }
+
+# Open the profile for editing
+notepad $PROFILE
+```
+
+Add the following lines to the opened profile file:
+
+```powershell
+Set-Alias dec-f E:\22-GithubDownload\sqleet-v0.31.1\scripts\decrypt-folder.bat
+Set-Alias enc-f E:\22-GithubDownload\sqleet-v0.31.1\scripts\encrypt-folder.bat
+```
+
+Save the file and restart PowerShell. The aliases will then be available:
+
+```powershell
+enc-f
+dec-f
+```
