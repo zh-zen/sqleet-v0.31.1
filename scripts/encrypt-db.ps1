@@ -1,0 +1,82 @@
+param(
+    [string]$SourceDb,
+    [string]$TargetDb,
+    [string]$Password
+)
+
+$ErrorActionPreference = "Stop"
+
+$sqleetExe = Join-Path (Split-Path $PSScriptRoot -Parent) "sqleet.exe"
+if (-not (Test-Path -LiteralPath $sqleetExe)) {
+    Write-Host "[ERROR] Cannot find sqleet.exe next to this script."
+    exit 1
+}
+
+Write-Host ""
+Write-Host "=== Encrypt SQLite Database ==="
+
+if ([string]::IsNullOrWhiteSpace($SourceDb)) {
+    $SourceDb = Read-Host "Source database path"
+}
+if ([string]::IsNullOrWhiteSpace($TargetDb)) {
+    $TargetDb = Read-Host "Encrypted output path"
+}
+if ([string]::IsNullOrWhiteSpace($Password)) {
+    $Password = Read-Host "Password"
+}
+
+if ([string]::IsNullOrWhiteSpace($SourceDb)) {
+    Write-Host "[ERROR] Source database path is required."
+    exit 1
+}
+if ([string]::IsNullOrWhiteSpace($TargetDb)) {
+    Write-Host "[ERROR] Encrypted output path is required."
+    exit 1
+}
+if ([string]::IsNullOrWhiteSpace($Password)) {
+    Write-Host "[ERROR] Password is required."
+    exit 1
+}
+if (-not (Test-Path -LiteralPath $SourceDb)) {
+    Write-Host "[ERROR] Source database does not exist:"
+    Write-Host $SourceDb
+    exit 1
+}
+
+$sourceFull = [System.IO.Path]::GetFullPath($SourceDb)
+$targetFull = [System.IO.Path]::GetFullPath($TargetDb)
+if ($sourceFull -ieq $targetFull) {
+    Write-Host "[ERROR] Source and target paths must be different."
+    exit 1
+}
+
+Copy-Item -LiteralPath $SourceDb -Destination $TargetDb -Force
+
+$escapedPassword = $Password.Replace("'", "''")
+$tmpSql = Join-Path $env:TEMP ("sqleet_encrypt_{0}_{1}.sql" -f (Get-Random), (Get-Random))
+Set-Content -LiteralPath $tmpSql -Value ("PRAGMA rekey='{0}';" -f $escapedPassword) -Encoding ascii
+
+try {
+    $command = '"' + $sqleetExe + '" "' + $TargetDb + '" < "' + $tmpSql + '"'
+    & cmd.exe /d /s /c $command
+    if ($LASTEXITCODE -ne 0) {
+        throw "sqleet exited with code $LASTEXITCODE."
+    }
+}
+catch {
+    Remove-Item -LiteralPath $TargetDb -Force -ErrorAction SilentlyContinue
+    Write-Host "[ERROR] Encryption failed."
+    Write-Host $_
+    exit 1
+}
+finally {
+    Remove-Item -LiteralPath $tmpSql -Force -ErrorAction SilentlyContinue
+}
+
+if (-not (Test-Path -LiteralPath $TargetDb)) {
+    Write-Host "[ERROR] Encryption command finished, but output file was not created."
+    exit 1
+}
+
+Write-Host "[OK] Encrypted database created:"
+Write-Host $TargetDb
