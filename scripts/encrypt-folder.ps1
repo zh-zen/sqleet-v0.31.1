@@ -36,17 +36,23 @@ if (-not (Test-Path -LiteralPath $FolderPath -PathType Container)) {
 }
 
 $dbFiles = Get-ChildItem -LiteralPath $FolderPath -File -Filter "*.db" |
-    Where-Object { $_.BaseName -notlike "*_enc" -and $_.BaseName -notlike "*_dec" } |
     Sort-Object Name
 
 if ($dbFiles.Count -eq 0) {
-    Write-Host "[ERROR] No eligible .db files were found in the folder."
+    Write-Host "[ERROR] No .db files were found in the folder."
     exit 1
 }
 
 $processed = 0
+$skipped = 0
 foreach ($dbFile in $dbFiles) {
     $targetPath = Join-Path $dbFile.DirectoryName ($dbFile.BaseName + "_enc" + $dbFile.Extension)
+    if (Test-Path -LiteralPath $targetPath) {
+        Write-Host ""
+        Write-Host ("[INFO] Skipping {0} because {1} already exists." -f $dbFile.Name, [System.IO.Path]::GetFileName($targetPath))
+        $skipped++
+        continue
+    }
     Write-Host ""
     Write-Host ("[INFO] Encrypting {0} -> {1}" -f $dbFile.Name, [System.IO.Path]::GetFileName($targetPath))
     & powershell -NoProfile -ExecutionPolicy Bypass -File $encryptScript -SourceDb $dbFile.FullName -TargetDb $targetPath -Password $Password
@@ -59,3 +65,4 @@ foreach ($dbFile in $dbFiles) {
 
 Write-Host ""
 Write-Host ("[OK] Encrypted {0} database file(s)." -f $processed)
+Write-Host ("[OK] Skipped {0} database file(s)." -f $skipped)

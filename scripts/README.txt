@@ -14,10 +14,10 @@ decrypt-db.bat
 Decrypt one encrypted database file.
 
 encrypt-folder.bat
-Encrypt all eligible .db files in one folder.
+Encrypt all .db files in one folder.
 
 decrypt-folder.bat
-Decrypt all eligible *_enc.db files in one folder.
+Decrypt all .db files in one folder.
 
 Usage
 -----
@@ -55,6 +55,7 @@ Examples:
 Notes
 -----
 
-  - output files are overwritten automatically if they already exist
+  - single-file mode overwrites output files automatically if they already exist
   - source files are not modified
-  - folder mode skips files already ending with _enc or _dec during encryption
+  - folder mode does not require a specific source file name pattern
+  - folder mode skips a source file when its corresponding target file already exists
